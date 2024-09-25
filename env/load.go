@@ -96,3 +96,12 @@ func Load[T any](optionFuncs ...OptionsFunc) (*T, error) {
 		return &cfg, nil
 	}
 }
+
+func MustLoad[T any](optionFuncs ...OptionsFunc) *T {
+	cfg, err := Load[T](optionFuncs...)
+	if err != nil {
+		fmt.Println("error:", err)
+		os.Exit(1)
+	}
+	return cfg
+}
