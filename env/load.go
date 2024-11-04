@@ -1,6 +1,7 @@
 package env
 
 import (
+	"encoding"
 	"errors"
 	"fmt"
 	"os"
@@ -72,21 +73,124 @@ func Load[T any](optionFuncs ...OptionsFunc) (*T, error) {
 		}
 
 		fieldValue := reflect.ValueOf(&cfg).Elem().Field(i)
-		switch fieldValue.Type().Kind() {
-		case reflect.String:
-			fieldValue.SetString(value)
-
-		case reflect.Int:
-			valueInt, err := strconv.ParseInt(value, 10, 64)
-			if err != nil {
-				errs = append(errs, fmt.Errorf("failed to parse int %s: %w", value, err))
-				continue
-			}
-			fieldValue.SetInt(valueInt)
+		switch val := fieldValue.Addr().Interface().(type) { // var val any := &cfg.Field
+		case encoding.TextUnmarshaler:
+			val.UnmarshalText([]byte(value))
 
 		default:
-			errs = append(errs, fmt.Errorf("unsupported type %s", typ))
-			continue
+			switch fieldValue.Type().Kind() {
+
+			case reflect.Bool:
+				valueBool, err := strconv.ParseBool(value)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse bool %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetBool(valueBool)
+
+			case reflect.Int:
+				valueInt, err := strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse int %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetInt(valueInt)
+
+			case reflect.Int8:
+				valueInt, err := strconv.ParseInt(value, 10, 8)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse int8 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetInt(valueInt)
+
+			case reflect.Int16:
+				valueInt, err := strconv.ParseInt(value, 10, 16)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse int16 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetInt(valueInt)
+
+			case reflect.Int32:
+				valueInt, err := strconv.ParseInt(value, 10, 32)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse int32 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetInt(valueInt)
+
+			case reflect.Int64:
+				valueInt, err := strconv.ParseInt(value, 10, 64)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse int64 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetInt(valueInt)
+
+			case reflect.Uint:
+				valueUint, err := strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse uint %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetUint(valueUint)
+
+			case reflect.Uint8:
+				valueUint, err := strconv.ParseUint(value, 10, 8)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse uint8 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetUint(valueUint)
+
+			case reflect.Uint16:
+				valueUint, err := strconv.ParseUint(value, 10, 16)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse uint16 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetUint(valueUint)
+
+			case reflect.Uint32:
+				valueUint, err := strconv.ParseUint(value, 10, 32)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse uint32 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetUint(valueUint)
+
+			case reflect.Uint64:
+				valueUint, err := strconv.ParseUint(value, 10, 64)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse uint64 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetUint(valueUint)
+
+			case reflect.Float32:
+				valueFloat, err := strconv.ParseFloat(value, 32)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse float32 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetFloat(valueFloat)
+
+			case reflect.Float64:
+				valueFloat, err := strconv.ParseFloat(value, 64)
+				if err != nil {
+					errs = append(errs, fmt.Errorf("failed to parse float64 %s: %w", value, err))
+					continue
+				}
+				fieldValue.SetFloat(valueFloat)
+
+			case reflect.String:
+				fieldValue.SetString(value)
+
+			default:
+				errs = append(errs, fmt.Errorf("unsupported type %s", typ))
+				continue
+			}
 		}
 	}
 
