@@ -26,7 +26,7 @@ var DEFAULT_OPTIONS = options{
 //	if err != nil {
 //		log.Fatal(err)
 //	}
-func Load[T any](optionFuncs ...OptionsFunc) (*T, error) {
+func Load[T any](optionFuncs ...OptionsFunc) (T, error) {
 	options := DEFAULT_OPTIONS
 	for _, fn := range optionFuncs {
 		fn(&options)
@@ -36,7 +36,7 @@ func Load[T any](optionFuncs ...OptionsFunc) (*T, error) {
 
 	typ := reflect.TypeOf(cfg)
 	if typ.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("%s is not a struct", typ)
+		return cfg, fmt.Errorf("%s is not a struct", typ)
 	}
 
 	errs := []error{}
@@ -194,14 +194,10 @@ func Load[T any](optionFuncs ...OptionsFunc) (*T, error) {
 		}
 	}
 
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
-	} else {
-		return &cfg, nil
-	}
+	return cfg, errors.Join(errs...)
 }
 
-func MustLoad[T any](optionFuncs ...OptionsFunc) *T {
+func MustLoad[T any](optionFuncs ...OptionsFunc) T {
 	cfg, err := Load[T](optionFuncs...)
 	if err != nil {
 		fmt.Println("error:", err)
