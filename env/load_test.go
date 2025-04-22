@@ -32,7 +32,7 @@ func TestLoad(t *testing.T) {
 	})
 
 	type VariablesWithDefault struct {
-		LogLevel slog.LevelVar `env:"LOG_LEVEL=INFO"`
+		LogLevel slog.Level `env:"LOG_LEVEL=INFO"`
 	}
 
 	t.Run("Returns an error given ", func(t *testing.T) {

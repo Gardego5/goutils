@@ -2,12 +2,12 @@ package env
 
 import (
 	"encoding"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"reflect"
 	"strconv"
-	"strings"
 )
 
 var DEFAULT_OPTIONS = options{
@@ -42,38 +42,38 @@ func Load[T any](optionFuncs ...OptionsFunc) (T, error) {
 	errs := []error{}
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
-		tag := field.Tag.Get(options.TagName)
-		if tag == "" {
-			continue
-		}
-
-		parts := strings.SplitN(tag, "=", 2)
-		var name, def string
-		switch len(parts) {
-		case 0:
-			errs = append(errs, fmt.Errorf("empty tag"))
-			continue
-
-		case 1:
-			name = parts[0]
-
-		case 2:
-			name = parts[0]
-			def = parts[1]
-		}
-
-		value, ok := os.LookupEnv(name)
+		tag, ok := field.Tag.Lookup(options.TagName)
 		if !ok {
-			if def != "" {
-				value = def
-			} else {
-				errs = append(errs, fmt.Errorf("env %s not found", name))
+			continue
+		}
+
+		t, err := parseTag(tag)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("failed to parse tag %s: %w", tag, err))
+			continue
+		}
+
+		value, ok := os.LookupEnv(t.name)
+		if !ok {
+			if t.required {
+				errs = append(errs, fmt.Errorf("env '%s' required, but not found", t.name))
 				continue
+			} else {
+				value = t.def
 			}
 		}
 
 		fieldValue := reflect.ValueOf(&cfg).Elem().Field(i)
-		switch val := fieldValue.Addr().Interface().(type) { // var val any := &cfg.Field
+		val := fieldValue.Addr().Interface()
+		if t.json {
+			err := json.Unmarshal([]byte(value), val)
+			if err != nil {
+				errs = append(errs, fmt.Errorf("failed to unmarshal JSON %s: %w", value, err))
+				continue
+			}
+		}
+
+		switch val := val.(type) { // var val any := &cfg.Field
 		case encoding.TextUnmarshaler:
 			val.UnmarshalText([]byte(value))
 
